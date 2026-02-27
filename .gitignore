@@ -32,3 +32,4 @@ yarn-error.log*
 # Betriebssystem-Dateien
 .DS_Store
 Thumbs.db
+.vercel

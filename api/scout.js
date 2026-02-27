@@ -1,74 +1,74 @@
 export default async function handler(req, res) {
+  // Verhindert falsche Request-Methoden
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   const { input, occasion, budget } = req.body || {};
 
-  if (!input || typeof input !== "string" || input.trim().length < 3 || input.length > 280) {
-    return res.status(400).json({ error: "Invalid input" });
+  // Validierung
+  if (!input || typeof input !== "string" || input.length > 280) {
+    return res.status(400).json({ error: "Invalid input size" });
   }
 
+  // API Key Check
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: "Server misconfiguration" });
+    console.error("Vercel Error: GEMINI_API_KEY environment variable is missing.");
+    return res.status(500).json({ error: "Backend configuration error (API Key missing)." });
   }
 
-  const MODEL_URL =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
-
-  const systemPrompt =
-    `Du bist GiftingScout AI. Finde 5 ECHTE Amazon.de Produkte. ` +
-    `Antworte NUR mit gültigem JSON im Format: ` +
-    `{ "summary": "...", "recommendations": [{ "name": "...", "brand": "...", "reason": "...", "price": "...", "img_tag": "...", "search": "..." }] }`;
+  const MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
   try {
-    const r = await fetch(`${MODEL_URL}?key=${apiKey}`, {
+    // In api/scout.js
+    const response = await fetch(`${MODEL_URL}?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [
           {
+            role: "user", // Rollen explizit definieren
             parts: [
               {
-                text:
-                  `Suche Geschenke für: ${input}. Anlass: ${occasion || "Geburtstag"}. Budget: ${budget || "bis 50 Euro"}.`
+                // System-Anweisung und User-Input kombinieren für maximale Kompatibilität
+                text: `${systemPrompt}\n\nSuche Geschenke für: ${input}. Anlass: ${occasion}. Budget: ${budget}.`
               }
             ]
           }
         ],
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        generationConfig: { responseMimeType: "application/json" }
+        generationConfig: { 
+          responseMimeType: "application/json" 
+        }
       })
     });
 
-    if (!r.ok) {
-      const t = await r.text().catch(() => "");
-      return res.status(502).json({ error: "Upstream error", details: t.slice(0, 500) });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Gemini API Error:", errorText);
+      return res.status(502).json({ error: "Google API rejected the request." });
     }
 
-    const data = await r.json();
+    const data = await response.json();
+    let jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!jsonText) throw new Error("No data received from Gemini model.");
 
-    // Gemini liefert JSON als String in candidates[0]...text
-    const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!jsonText) {
-      return res.status(502).json({ error: "No model output" });
-    }
+    /**
+     * FIX FÜR 502: Gemini liefert oft Markdown-Wrapper mit.
+     * Wir säubern den String, damit JSON.parse nicht abstürzt.
+     */
+    jsonText = jsonText.replace(/```json/g, "").replace(/```/g, "").trim();
 
-    let parsed;
     try {
-      parsed = JSON.parse(jsonText);
-    } catch {
-      return res.status(502).json({ error: "Model returned invalid JSON" });
+      const parsed = JSON.parse(jsonText);
+      return res.status(200).json(parsed);
+    } catch (parseError) {
+      console.error("JSON Parse Error. Raw Text:", jsonText);
+      return res.status(502).json({ error: "AI returned malformed data. Please try again." });
     }
-
-    // Minimal validation
-    if (!parsed?.recommendations || !Array.isArray(parsed.recommendations)) {
-      return res.status(502).json({ error: "Unexpected response shape" });
-    }
-
-    return res.status(200).json(parsed);
   } catch (e) {
-    return res.status(500).json({ error: "Gemini request failed" });
+    console.error("Vercel Function Crash:", e.message);
+    return res.status(502).json({ error: "Critical Backend Failure." });
   }
 }
