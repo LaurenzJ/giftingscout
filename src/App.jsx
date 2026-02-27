@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Sparkles, ShoppingBag, ExternalLink, Gift, X, 
   ArrowDown, RotateCcw, TrendingUp, Search, 
@@ -11,7 +11,7 @@ import {
  * PRODUCTION READY CODE - giftingscout.com
  * Fokus: Amazon.de Affiliate & Rechtssicherheit
  */
-const AMAZON_TAG = "giftingscout0e-21"; 
+const AMAZON_TAG = "giftingscout-21"; 
 const MAX_INPUT_LENGTH = 280;
 
 // Statische Produkte für die Startseite (Boostet Affiliate-Klicks vor der Suche)
@@ -50,14 +50,7 @@ export default function App() {
 
   const resultsRef = useRef(null);
 
-  // Sicherer Zugriff auf Umgebungsvariablen für verschiedene Compiler-Ziele
-  const getApiKey = () => {
-    try {
-      return import.meta.env.VITE_GEMINI_API_KEY || "";
-    } catch (e) {
-      return "";
-    }
-  };
+  
 
   const handleScout = async (e) => {
     if (e) e.preventDefault();
@@ -67,34 +60,24 @@ export default function App() {
     setError(null);
     setResults(null);
 
-    const apiKey = getApiKey();
-    const MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
-
-    if (!apiKey) {
-      setError("Konfigurationsfehler: API Key fehlt in der .env Datei.");
-      setLoading(false);
-      return;
-    }
-
-    const systemPrompt = `Du bist GiftingScout AI. Finde 5 ECHTE Amazon.de Produkte. Antworte NUR mit JSON. { "summary": "...", "recommendations": [{ "name": "...", "brand": "...", "reason": "...", "price": "...", "img_tag": "..." }] }`;
-
     try {
-      const response = await fetch(`${MODEL_URL}?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `Suche Geschenke für: ${input}. Anlass: ${occasion}. Budget: ${budget}.` }] }],
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          generationConfig: { responseMimeType: "application/json" }
-        })
+      const response = await fetch("/api/scout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input, occasion, budget })
       });
 
-      if (!response.ok) throw new Error("API Limit.");
-      const data = await response.json();
-      const parsedData = JSON.parse(data.candidates[0].content.parts[0].text);
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err?.error || "API Limit / Server Error");
+      }
+
+      // Server liefert bereits dein finales JSON:
+      // { summary: "...", recommendations: [...] }
+      const parsedData = await response.json();
       setResults(parsedData);
-      
-      setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth' }), 300);
+
+      setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth" }), 300);
     } catch (err) {
       setError("Der Scout braucht kurz Pause. Bitte versuche es gleich nochmal.");
     } finally {
@@ -172,6 +155,7 @@ export default function App() {
                 className="w-full bg-zinc-950 border border-white/5 rounded-2xl p-6 text-white focus:border-indigo-500 outline-none h-32 resize-none transition-all placeholder:text-zinc-800 shadow-inner"
               />
             </div>
+            
             
             <div className="grid grid-cols-2 gap-4">
                <div className="space-y-2">
@@ -295,9 +279,9 @@ export default function App() {
         <Modal title="Impressum" onClose={() => setActiveModal(null)}>
           <h3 className="text-white font-bold uppercase tracking-widest text-xs">Angaben gemäß § 5 TMG</h3>
           <p>
-            [DEIN NAME]<br />
-            [DEINE STRASSE]<br />
-            [DEINE PLZ & STADT]
+            Laurent Brand<br />
+            11, Viischt Huerkels<br />
+            9673 Oberwampach
           </p>
           <h3 className="text-white font-bold uppercase tracking-widest text-xs pt-4">Kontakt</h3>
           <p>E-Mail: hello@giftingscout.com</p>
