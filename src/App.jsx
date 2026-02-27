@@ -3,13 +3,13 @@ import {
   Sparkles, ShoppingBag, ExternalLink, Gift, X, 
   RotateCcw, Search, Star, Calendar, Heart,
   ChevronRight, Mail, Package, Globe, Shield, FileText, 
-  CheckCircle2, TrendingUp, Info, Zap, MousePointer2
+  CheckCircle2, TrendingUp, Info, Zap
 } from 'lucide-react';
 
 /**
  * PRODUCTION RELEASE - giftingscout.com
  * Partner-ID: giftingscout-21 (Amazon.de)
- * Rechtlich & technisch optimiert für Vercel Deployment.
+ * Optimiert für Vercel Deployment & Amazon Compliance.
  */
 const AMAZON_TAG = "giftingscout-21"; 
 const MAX_INPUT_LENGTH = 280;
@@ -18,16 +18,16 @@ const FEATURED_DEALS = [
   {
     name: "Kindle Paperwhite (16 GB)",
     brand: "Amazon",
-    reason: "Der Goldstandard für alle, die gerne lesen. Wasserfest und mit verstellbarer Farbtemperatur.",
+    reason: "Der Goldstandard für E-Reader. Wasserfest und mit verstellbarer Farbtemperatur für perfektes Lesen.",
     price: "ca. 169,00 €",
-    search: "Kindle Paperwhite"
+    search: "Kindle Paperwhite 16GB"
   },
   {
-    name: "Lego Architecture: Berlin Skyline",
+    name: "Lego Architecture: New York City",
     brand: "LEGO",
-    reason: "Ein elegantes Sammlerstück für das Büro oder Wohnzimmer. Perfekt für Ästheten.",
-    price: "ca. 34,00 €",
-    search: "Lego Architecture Berlin"
+    reason: "Ein zeitloses Design-Objekt für den Schreibtisch. Ideal für Fans von Architektur und Ästhetik.",
+    price: "ca. 45,00 €",
+    search: "Lego Architecture New York"
   },
   {
     name: "Philips Hue Starter Set",
@@ -74,7 +74,8 @@ export default function App() {
       
       setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth" }), 300);
     } catch (err) {
-      setError("Der Scout braucht kurz Pause. Bitte versuche es in 1 Minute nochmal.");
+      setError("Der Scout braucht kurz Pause. Bitte versuche es in einer Minute nochmal.");
+      console.error("Scout Error:", err);
     } finally {
       setLoading(false);
     }
@@ -120,33 +121,33 @@ export default function App() {
         </div>
         <div className="flex gap-4">
            <button onClick={() => setActiveModal('support')} className="text-[10px] font-bold text-zinc-500 hover:text-white uppercase tracking-widest hidden md:block">Support</button>
-           {results && <button onClick={() => {setResults(null); setInput('');}} className="p-2 bg-white/5 rounded-lg text-zinc-400 hover:text-white"><RotateCcw size={18} /></button>}
+           {results && <button onClick={() => {setResults(null); setInput('');}} className="p-2 bg-white/5 rounded-lg text-zinc-400 hover:text-white transition-all"><RotateCcw size={18} /></button>}
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-20 space-y-28">
         
-        {/* Hero */}
+        {/* Branding Hero */}
         <section className="text-center space-y-10 animate-in fade-in duration-1000">
           <div className="inline-flex items-center gap-2 bg-zinc-900 border border-white/10 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-indigo-400">
-             <Zap size={14} fill="currentColor" /> AI-powered discovery
+             <Zap size={14} fill="currentColor" /> AI-Marketplace Analysis
           </div>
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.85] text-white">
             Schenke mit <br/><span className="text-indigo-500 italic underline decoration-white/5">Präzision.</span>
           </h1>
           <p className="text-zinc-500 text-lg max-w-xl mx-auto font-medium">
-            GiftingScout analysiert Trends auf Amazon.de, um basierend auf deinen Angaben die perfekten Empfehlungen zu finden.
+            GiftingScout analysiert Trends auf Amazon.de, um basierend auf deinem Profil das perfekte Geschenk zu finden.
           </p>
         </section>
 
-        {/* Scout Form */}
+        {/* Scout Interface */}
         <section className="max-w-xl mx-auto relative group">
           <div className="absolute -inset-2 bg-indigo-500/10 rounded-[3.2rem] blur-3xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
           <div className="bg-[#0A0A0A] p-10 border border-white/10 rounded-[3.2rem] space-y-8 relative shadow-2xl">
             <div className="space-y-4">
               <div className="flex justify-between items-end px-2">
                 <label className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600">Empfänger Profil</label>
-                <span className={`text-[9px] font-bold tracking-widest ${input.length >= MAX_INPUT_LENGTH ? 'text-rose-500' : 'text-zinc-700'}`}>
+                <span className={`text-[9px] font-bold tracking-widest ${input.length >= MAX_INPUT_LENGTH ? 'text-rose-500 font-black animate-pulse' : 'text-zinc-700'}`}>
                   {input.length} / {MAX_INPUT_LENGTH}
                 </span>
               </div>
@@ -183,11 +184,11 @@ export default function App() {
           </div>
         </section>
 
-        {/* Items Grid */}
+        {/* Results Deck */}
         <div ref={resultsRef} className="pb-40 scroll-mt-24 space-y-16">
           <div className="text-center">
             <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-600 italic">
-              {results ? "Maßgeschneiderte Vorschläge" : "Aktuelle Trend-Entdeckungen auf Amazon.de"}
+              {results ? "Deine personalisierten Vorschläge" : "Aktuelle Trend-Entdeckungen auf Amazon.de"}
             </h3>
           </div>
 
@@ -206,13 +207,14 @@ export default function App() {
                    </div>
                 </div>
 
-                {/* Content Area */}
+                {/* Info Panel */}
                 <div className="flex-1 p-10 md:p-14 space-y-8 flex flex-col justify-center overflow-hidden">
                   <div className="space-y-4">
                     <div className="flex items-center gap-3 text-[11px] font-black text-zinc-600 uppercase tracking-[0.4em]">
                       <Star size={12} fill="currentColor" className="text-indigo-500" /> {item.brand}
                     </div>
-                    <h4 className="text-3xl md:text-4xl font-black text-white leading-tight tracking-tighter line-clamp-2">{item.name}</h4>
+                    {/* Fix für Überläufe: line-clamp sorgt für sauberen Umbruch */}
+                    <h4 className="text-3xl md:text-4xl font-black text-white leading-tight tracking-tighter line-clamp-2 break-words">{item.name}</h4>
                     <p className="text-lg leading-relaxed text-zinc-500 italic line-clamp-3">"{item.reason}"</p>
                   </div>
                   
@@ -235,7 +237,6 @@ export default function App() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="py-40 px-10 border-t border-white/5 bg-black">
         <div className="max-w-4xl mx-auto space-y-16 text-center">
           <div className="flex items-center justify-center gap-6 opacity-30 grayscale hover:opacity-50 transition-opacity">
@@ -255,7 +256,7 @@ export default function App() {
             <button onClick={() => setActiveModal('support')} className="hover:text-white transition-colors decoration-indigo-500 underline underline-offset-8 decoration-2">Support</button>
           </div>
           
-          <p className="text-[9px] text-zinc-800 font-bold tracking-widest">© 2026 GIFTINGSCOUT.COM • MADE BY LAURENT BRAND</p>
+          <p className="text-[9px] text-zinc-800 font-bold tracking-widest uppercase">© 2026 GIFTINGSCOUT.COM • MADE BY LAURENT BRAND</p>
         </div>
       </footer>
 
