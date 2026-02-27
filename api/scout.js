@@ -1,45 +1,39 @@
 export default async function handler(req, res) {
-  // Verhindert falsche Request-Methoden
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   const { input, occasion, budget } = req.body || {};
 
-  // Validierung
   if (!input || typeof input !== "string" || input.length > 280) {
     return res.status(400).json({ error: "Invalid input size" });
   }
 
-  // API Key Check
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    console.error("Vercel Error: GEMINI_API_KEY environment variable is missing.");
     return res.status(500).json({ error: "Backend configuration error (API Key missing)." });
   }
+
+  // DEFINITION HINZUFÜGEN:
+  const systemPrompt = 
+    "Du bist GiftingScout AI. Finde 5 ECHTE Amazon.de Produkte. " +
+    "Antworte AUSSCHLIESSLICH mit gültigem JSON. " +
+    "Format: { \"summary\": \"...\", \"recommendations\": [{ \"name\": \"...\", \"brand\": \"...\", \"reason\": \"...\", \"price\": \"...\", \"img_tag\": \"...\", \"search\": \"...\" }] }";
 
   const MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
   try {
-    // In api/scout.js
     const response = await fetch(`${MODEL_URL}?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [
           {
-            role: "user", // Rollen explizit definieren
-            parts: [
-              {
-                // System-Anweisung und User-Input kombinieren für maximale Kompatibilität
-                text: `${systemPrompt}\n\nSuche Geschenke für: ${input}. Anlass: ${occasion}. Budget: ${budget}.`
-              }
-            ]
+            role: "user",
+            parts: [{ text: `${systemPrompt}\n\nSuche Geschenke für: ${input}. Anlass: ${occasion}. Budget: ${budget}.` }]
           }
         ],
-        generationConfig: { 
-          responseMimeType: "application/json" 
-        }
+        generationConfig: { responseMimeType: "application/json" }
       })
     });
 
