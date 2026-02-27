@@ -18,7 +18,8 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Backend configuration error (API Key missing)." });
   }
 
-  const MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
+  const MODEL_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
   try {
     const response = await fetch(`${MODEL_URL}?key=${apiKey}`, {
