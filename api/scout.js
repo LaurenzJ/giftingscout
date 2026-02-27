@@ -18,20 +18,28 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Backend configuration error (API Key missing)." });
   }
 
-  const MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+  const MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
   try {
+    // In api/scout.js
     const response = await fetch(`${MODEL_URL}?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: `Suche 5 Geschenke für: ${input}. Anlass: ${occasion}. Budget: ${budget}.` }] }],
-        systemInstruction: { 
-          parts: [{ 
-            text: "Du bist GiftingScout AI. Antworte NUR mit reinem JSON-Code. KEIN Markdown, KEINE Backticks. Format: { \"summary\": \"...\", \"recommendations\": [{ \"name\": \"...\", \"brand\": \"...\", \"reason\": \"...\", \"price\": \"...\", \"search\": \"...\" }] }" 
-          }] 
-        },
-        generationConfig: { responseMimeType: "application/json" }
+        contents: [
+          {
+            role: "user", // Rollen explizit definieren
+            parts: [
+              {
+                // System-Anweisung und User-Input kombinieren für maximale Kompatibilität
+                text: `${systemPrompt}\n\nSuche Geschenke für: ${input}. Anlass: ${occasion}. Budget: ${budget}.`
+              }
+            ]
+          }
+        ],
+        generationConfig: { 
+          responseMimeType: "application/json" 
+        }
       })
     });
 
